@@ -1,0 +1,32 @@
+package employee.util;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+
+public class DBUtil {
+    public static Connection getConnection() {
+        Connection conn = null;
+        String myDriver = "oracle.jdbc.driver.OracleDriver";
+        String myURL = "jdbc:oracle:thin:@localhost:1521:xe";
+        String myID = "hr";
+        String myPass = "";
+
+        try {
+            Class.forName(myDriver);
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            conn = DriverManager.getConnection(myURL,myID,myPass);
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        return conn;
+
+    }
+}
+
