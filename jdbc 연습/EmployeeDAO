@@ -1,0 +1,497 @@
+package employee.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+
+import employee.util.DBUtil;
+
+
+public class EmployeeDAO {
+
+    private EmployeeDAO() {
+    }
+
+    private static EmployeeDAO instance = new EmployeeDAO();
+
+    public static EmployeeDAO getinstance() {
+        return instance;
+    }
+
+
+    Scanner s = new Scanner(System.in);
+
+    public String DeptName(int dno) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        String dname;
+        String query = "select dname from department where dno = ?";
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(query);
+
+            pstmt.setInt(1, dno);
+
+            rs = pstmt.executeQuery();
+
+            while(rs.next()) {
+                dname = rs.getString("DNAME");
+                return dname;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+                if (pstmt != null)
+                    pstmt.close();
+                if (conn != null)
+                    conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        return "";
+    }
+
+
+    public int EmployeeInsert(EmployeeVO vo) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        PreparedStatement pstmt2 = null;
+        ResultSet rs = null;
+
+        int row = 0;
+        int eno = 999;
+        String query = "insert into employee(eno,ename,job,manager,hiredate,salary,commission,dno) values(?,?,?,?,to_date(?,'YYYY-MM-DD'),?,?,?)";
+        String query2 = "select eno from employee";
+
+        List<Integer> enoList = new ArrayList<>();
+        enoList.add(eno);
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(query);
+
+            pstmt2 = conn.prepareStatement(query2);
+            rs = pstmt2.executeQuery();
+
+            while(rs.next()) {
+                if(rs.getInt("ENO")<7369) {
+                    enoList.add(rs.getInt("ENO"));
+                }
+            }
+            eno = Collections.max(enoList) + 1;
+
+            pstmt.setInt(1, eno);
+            pstmt.setString(2, vo.getEname());
+            pstmt.setString(3, vo.getJob());
+            pstmt.setInt(4, vo.getManager());
+            pstmt.setString(5, vo.getHiredate());
+            pstmt.setInt(6, vo.getSalary());
+            pstmt.setInt(7, vo.getCommission());
+            pstmt.setInt(8, vo.getDno());
+
+
+            while(true) {
+                System.out.print("등록하시겠습니까(y/n) ? ");
+                String ch = s.nextLine();
+
+                if (ch.equals("y") || ch.equals("Y")) {
+                    row = pstmt.executeUpdate();
+                } else if (ch.equals("n") || ch.equals("N")) {
+                    row = 0;
+                    break;
+                }
+                else{
+                    System.out.println("다시 입력해 주세요.");
+                }
+            }
+
+
+            return row;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+                if (pstmt != null)
+                    pstmt.close();
+                if (conn != null)
+                    conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return row;
+    }
+
+    public void EmployeeDelect(int num) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        String query = "delete from employee where eno = ?";
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(query);
+
+            pstmt.setInt(1, num);
+
+            pstmt.executeQuery();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+                if (pstmt != null)
+                    pstmt.close();
+                if (conn != null)
+                    conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public void EmployeeSerch(String name) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        PreparedStatement pstmt2 = null;
+        PreparedStatement pstmt3 = null;
+        ResultSet rs = null;
+        ResultSet rs2 = null;
+        ResultSet rs3 = null;
+
+        String query = "select * from employee where ename = ?";
+        String query2 = "select dname from department d, employee e where ename = ? and d.dno = e.dno";
+        String query3 = "select NVL(MAX(ENAME||COUNT(1)), 0) ENAME from employee  where eno= (select manager from employee where ename= ? ) GROUP BY ENAME";
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            pstmt2 = conn.prepareStatement(query2);
+            pstmt3 = conn.prepareStatement(query3);
+
+            pstmt.setString(1, name);
+            pstmt2.setString(1, name);
+            pstmt3.setString(1, name);
+
+            rs = pstmt.executeQuery();
+            rs2 = pstmt2.executeQuery();
+            rs3 = pstmt3.executeQuery();
+
+            while (rs.next()) {
+                System.out.print("사원번호 : " + rs.getInt("ENO") + "\t\t");
+                System.out.print("사원이름 : " + rs.getString("ENAME") + "\n");
+                System.out.print("업무영 : " + rs.getString("JOB") + "\t\t");
+            }
+
+            while (rs3.next()) {
+                if(rs3.getString("ENAME").equals("0")) {
+                    System.out.print("상사이름 : 없음 \n");
+                }
+                else {
+                    System.out.print("상사이름 : " + rs3.getString("ENAME").substring(0, rs3.getString("ENAME").length()-1) + "\n");
+                }
+            }
+
+            rs.beforeFirst();
+            while (rs.next()) {
+                System.out.print("입사일자 : " + rs.getString("HIREDATE").substring(0,11) + "\t");
+                System.out.print("급여 : " + rs.getInt("SALARY") + "\n");
+                System.out.print("커미션 : " + rs.getInt("COMMISSION") + "\t\t");
+            }
+            System.out.print("부서명 : ");
+            while (rs2.next()) {
+                System.out.print(rs2.getString("DNAME") + " ");
+            }
+            System.out.print("\n");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+                if (pstmt != null)
+                    pstmt.close();
+                if (conn != null)
+                    conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public void EmployeeSerch(int eno) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        PreparedStatement pstmt2 = null;
+        PreparedStatement pstmt3 = null;
+        ResultSet rs = null;
+        ResultSet rs2 = null;
+        ResultSet rs3 = null;
+
+        String query = "select * from employee where eno = ?";
+        String query2 = "select dname from department d, employee e where eno = ? and d.dno = e.dno";
+        String query3 = "select NVL(MAX(ENAME||COUNT(1)), 0) ENAME from employee  where eno= (select manager from employee where eno= ? ) GROUP BY ENAME";
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            pstmt2 = conn.prepareStatement(query2);
+            pstmt3 = conn.prepareStatement(query3);
+
+            pstmt.setInt(1, eno);
+            pstmt2.setInt(1, eno);
+            pstmt3.setInt(1, eno);
+
+            rs = pstmt.executeQuery();
+            rs2 = pstmt2.executeQuery();
+            rs3 = pstmt3.executeQuery();
+
+            while (rs.next()) {
+                System.out.print("사원번호 : " + rs.getInt("ENO") + "\t\t");
+                System.out.print("사원이름 : " + rs.getString("ENAME") + "\n");
+                System.out.print("업무영 : " + rs.getString("JOB") + "\t\t");
+            }
+
+            while (rs3.next()) {
+                if(rs3.getString("ENAME").equals("0")) {
+                    System.out.print("상사이름 : 없음 \n");
+                }
+                else {
+                    System.out.print("상사이름 : " + rs3.getString("ENAME").substring(0, rs3.getString("ENAME").length()-1) + "\n");
+                }
+            }
+
+            rs.beforeFirst();
+            while (rs.next()) {
+                System.out.print("입사일자 : " + rs.getString("HIREDATE").substring(0,11) + "\t");
+                System.out.print("급여 : " + rs.getInt("SALARY") + "\n");
+                System.out.print("커미션 : " + rs.getInt("COMMISSION") + "\t\t");
+            }
+            System.out.print("부서명 : ");
+            while (rs2.next()) {
+                System.out.print(rs2.getString("DNAME") + " ");
+            }
+            System.out.print("\n");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+                if (pstmt != null)
+                    pstmt.close();
+                if (conn != null)
+                    conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+
+
+
+    public void EmployeeModify(int eno) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        PreparedStatement pstmt2 = null;
+        ResultSet rs = null;
+
+        String query = "update employee set ename = ?, job = ?, manager = ?, hiredate = ?, salary = ?, commission = ?, dno= ? where eno = ?";
+        String query2 = "select eno, ename, job, manager, hiredate, salary, commission, dno from employee where eno = ?";
+        try {
+
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(query);
+
+            pstmt2 = conn.prepareStatement(query2);
+            pstmt2.setInt(1, eno);
+            rs = pstmt2.executeQuery();
+
+            List<EmployeeVO> tempList = new ArrayList<>();
+            EmployeeVO vo = null;
+
+            Scanner s = new Scanner(System.in);
+
+            while (rs.next()) {
+                vo = new EmployeeVO();
+
+                System.out.print("사원이름(" + rs.getString("ENAME") + "): ");
+
+                vo.setEno(rs.getInt("ENO"));
+                vo.setEname(rs.getString("ENAME"));
+                vo.setJob(rs.getString("JOB"));
+                vo.setManager(rs.getInt("MANAGER"));
+                vo.setHiredate(rs.getString("HIREDATE"));
+                vo.setSalary(rs.getInt("SALARY"));
+                vo.setCommission(rs.getInt("COMMISSION"));
+                vo.setDno(rs.getInt("DNO"));
+
+                tempList.add(vo);
+            }
+            String newName = s.nextLine();
+            if(newName.isEmpty()) {
+                newName = vo.getEname();
+            }
+
+            System.out.print("업무명 : ");
+            String newJob = s.nextLine();
+            if(newJob.isEmpty()) {
+                newJob = vo.getJob();
+            }
+
+            System.out.print("상사번호 : ");
+            String newManager = s.nextLine();
+            if(newManager.isEmpty()) {
+                newManager = Integer.toString(vo.getManager());
+            }
+
+            System.out.print("입사일자 : ");
+            String newHiredate = s.nextLine();
+            if(newHiredate.isEmpty()){
+                newHiredate = vo.getHiredate().toString().substring(0,11);
+            }
+
+            System.out.print("급여 : ");
+            String newSalary = s.nextLine();
+            if(newSalary.isEmpty()) {
+                newSalary = Integer.toString(vo.getSalary());
+            }
+
+            System.out.print("커미션 : ");
+            String newCommission = s.nextLine();
+            if(newCommission.isEmpty()) {
+                newCommission = Integer.toString(vo.getCommission());
+            }
+
+            System.out.print("부서정보(10: " + DeptName(10) + ") " + "부서정보(20: " + DeptName(20) + ") " + "부서정보(30: " +
+                    DeptName(30) + ") " + "부서정보(40: " + DeptName(40) + ") \n");
+
+            System.out.print("부서번호 : ");
+            String newDno = s.nextLine();
+            if(newDno.isEmpty()) {
+                newDno = Integer.toString(vo.getDno());
+            }
+
+            while(true) {
+                System.out.print("\n");
+                System.out.print("수정하시겠습니까(y/n) ? ");
+                String ch = s.nextLine();
+
+                if (ch.equals("y") || ch.equals("Y")) {
+                    pstmt.setString(1, newName);
+                    pstmt.setString(2, newJob);
+                    pstmt.setInt(3, Integer.parseInt(newManager));
+                    pstmt.setString(4, newHiredate);
+                    pstmt.setInt(5, Integer.parseInt(newSalary));
+                    pstmt.setInt(6, Integer.parseInt(newCommission));
+                    pstmt.setInt(7, Integer.parseInt(newDno));
+                    pstmt.setInt(8, eno);
+
+                    System.out.println(newName + " " + newJob + " "+ newManager + " "+ newHiredate + " "+ newSalary + " "+ newCommission + " "+ newDno + " "+ eno);
+                    pstmt.executeUpdate();
+                    break;
+                } else if (ch.equals("n") || ch.equals("N")) {
+                    break;
+                }
+                else{
+                    System.out.println("다시 입력해 주세요.");
+                }
+            }
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+                if (pstmt != null)
+                    pstmt.close();
+                if (conn != null)
+                    conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public List<EmployeeVO> EmployeeList() {
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        List<EmployeeVO> eList = new ArrayList<>();
+
+        String query = "select eno,ename,job,manager,hiredate,salary,commission,dname from employee e, department d where e.dno = d.dno order by eno asc";
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(query);
+
+            rs = pstmt.executeQuery();
+
+            EmployeeVO vo = null;
+
+            while (rs.next()) {
+                vo = new EmployeeVO();
+
+                vo.setEno(rs.getInt("ENO"));
+                vo.setEname(rs.getString("ENAME"));
+                vo.setJob(rs.getString("JOB"));
+                vo.setManager(rs.getInt("MANAGER"));
+                vo.setHiredate(rs.getString("HIREDATE"));
+                vo.setSalary(rs.getInt("SALARY"));
+                vo.setCommission(rs.getInt("COMMISSION"));
+                vo.setDname(rs.getString("DNAME"));
+
+                eList.add(vo);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+                if (pstmt != null)
+                    pstmt.close();
+                if (conn != null)
+                    conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return eList;
+    }
+
+
+
+}
