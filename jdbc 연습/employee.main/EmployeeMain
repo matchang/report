@@ -1,0 +1,14 @@
+package employee.main;
+
+import employee.EmployeeChoice;
+
+public class EmployeeMain {
+
+    public static void main(String[] args) {
+
+        EmployeeChoice ec = new EmployeeChoice();
+
+        ec.choice();
+    }
+
+}
