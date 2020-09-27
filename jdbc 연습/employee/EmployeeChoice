@@ -1,0 +1,181 @@
+package employee;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Scanner;
+
+import employee.dao.EmployeeDAO;
+import employee.dao.EmployeeVO;
+
+
+public class EmployeeChoice {
+
+    Scanner s = new Scanner(System.in);
+    EmployeeDAO dao = EmployeeDAO.getinstance();
+
+    public void choice() {
+
+        while(true) {
+
+
+            System.out.println("===============================================");
+            System.out.println("=           사원&부서 관리 프로그램 ver 1.0       =");
+            System.out.println("===============================================");
+            System.out.println("		    [1] 사원 전체 목록");
+            System.out.println("		    [2] 신규 사원 등록");
+            System.out.println("		    [3] 사원 검색");
+            System.out.println("		    [4] 사원 정보 수정");
+            System.out.println("	    	[5] 사원 정보 삭제");
+            System.out.println("		    [6] 프로그램 종료");
+            System.out.println("-------------------------------------------------");
+
+            System.out.print("해당 항목을 선택하세요?: ");
+
+            String input = s.nextLine();
+            System.out.println("\n===============================================");
+
+            int num;
+            EmployeePrint ep = new EmployeePrint();
+
+            if(input.equals("1")) {
+                ep.totalPrint();
+                s.nextLine();
+                System.out.print("\n\n\n");
+                continue;
+            }
+            if(input.equals("2")) {
+
+                EmployeeVO vo = new EmployeeVO();
+
+                System.out.println("           *** 신규 사원 등록 ***");
+
+                System.out.print("사원이름 : ");
+                vo.setEname(s.nextLine());
+
+                System.out.print("업무명 : ");
+                vo.setJob(s.nextLine());
+
+                System.out.print("상사번호 : ");
+                vo.setManager(Integer.parseInt(s.nextLine()));
+
+                LocalDate d = LocalDate.now();
+                System.out.print("입사날짜(" + d.toString() + ") :");
+                String date = s.nextLine();
+
+                if(date.isEmpty()) {
+                    vo.setHiredate(d.toString());
+                    System.out.print("입사날짜 오늘 날짜로 함 \n");
+                }
+                else {
+                    vo.setHiredate(date);
+                    System.out.print("입사날짜 " + date + "로 함\n");
+                }
+
+                System.out.print("급여 : ");
+                vo.setSalary(Integer.parseInt(s.nextLine()));
+
+                System.out.print("커미션 : ");
+                vo.setCommission(Integer.parseInt(s.nextLine()));
+
+                System.out.print("부서정보(10: " + dao.DeptName(10) + ") " + "부서정보(20: " + dao.DeptName(20) + ") " + "부서정보(30: " +
+                        dao.DeptName(30) + ") " + "부서정보(40: " + dao.DeptName(40) + ") \n");
+
+                int dnoNum = 0;
+                while(true){
+                    System.out.print("부서번호: ");
+                    dnoNum = s.nextInt();
+                    if(dnoNum == 10 || dnoNum == 20 || dnoNum == 30 || dnoNum == 40){
+                        break;
+                    }
+                    else{
+                        System.out.println("잘못된 부서번호 입니다 다시 입력해주세요.");
+                    }
+                }
+                vo.setDno(dnoNum);
+
+                if(dao.EmployeeInsert(vo) == 1) {
+                    System.out.println("입력 성공");
+                }
+                else {
+                    System.out.print("입력 실패");
+                }
+                s.nextLine();
+                System.out.print("\n\n");
+                continue;
+            }
+            if(input.equals("3")) {
+                System.out.print("검색 할 사원의 이름을 입력하세요: ");
+                String name = s.next();
+                dao.EmployeeSerch(name);
+                System.out.print("\n\n");
+                s.nextLine();
+
+                while(true) {
+                    System.out.print("\n");
+
+                    System.out.print("검색을 계속할가요?(y/n) ? ");
+                    String ch = s.nextLine();
+
+                    if (ch.equals("y") || ch.equals("Y")) {
+                        System.out.print("검색 할 사원의 이름을 입력하세요: ");
+                        String re = s.nextLine();
+                        dao.EmployeeSerch(re);
+                    } else if (ch.equals("n") || ch.equals("N")) {
+                        break;
+                    }
+                    else{
+                        System.out.println("다시 입력해 주세요.");
+                    }
+                }
+
+                continue;
+            }
+            if(input.equals("4")) {
+                System.out.print("수정을 원하시는 사원의 번호를 입력하세요: ");
+                num = s.nextInt();
+                dao.EmployeeModify(num);
+                System.out.print("\n\n");
+                s.nextLine();
+                continue;
+            }
+            if(input.equals("5")) {
+                System.out.print("삭제를 원하시는 사원의 번호를 입력하세요: ");
+                num = s.nextInt();
+                dao.EmployeeSerch(num);
+
+                while(true) {
+                    System.out.print("\n");
+                    s.nextLine();
+                    System.out.print("삭제할까요?(y/n) ? ");
+                    String ch = s.nextLine();
+                    if (ch.equals("y") || ch.equals("Y")) {
+                        dao.EmployeeDelect(num);
+                        break;
+                    } else if (ch.equals("n") || ch.equals("N")) {
+                        break;
+                    }
+                    else{
+                        System.out.println("다시 입력해 주세요.");
+                    }
+                }
+
+                System.out.print("\n\n");
+                s.nextLine();
+                continue;
+            }
+            if(input.equals("6")) {
+                break;
+            }
+            else {
+                System.out.println("\n해당번호가 없음");
+                continue;
+            }
+
+
+        }
+
+
+    }
+}
