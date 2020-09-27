@@ -1,0 +1,83 @@
+package employee;
+
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+import employee.dao.EmployeeDAO;
+import employee.dao.EmployeeVO;
+
+
+
+public class EmployeePrint {
+
+    public void totalPrint() {
+        EmployeeDAO dao = EmployeeDAO.getinstance();
+
+        Scanner s = new Scanner(System.in);
+
+        List<EmployeeVO> lc = new ArrayList<EmployeeVO>();
+
+        lc = dao.EmployeeList();
+
+        System.out.println("\n\n사원번호\t이름\t\t\t업무명\t\t상사번호\t입사일자\t\t급여\t\t커미션\t부서명");
+
+        for(EmployeeVO vo: lc) {
+            System.out.print(vo.getEno() + "\t");
+
+            if(vo.getEname() .length()<8) {
+                if(vo.getEname() .length()<4){
+                    System.out.print(vo.getEname() + "\t\t\t");
+                }
+                else {
+                    System.out.print(vo.getEname() + "\t\t");
+                }
+            }
+            else {
+                System.out.print(vo.getEname() + "\t");
+            }
+
+            if(vo.getJob().length()<8) {
+                if(vo.getJob().length()<3){
+                    System.out.print(vo.getJob() + "\t\t\t");
+                }
+                System.out.print(vo.getJob() + "\t\t");
+            }
+            else {
+                System.out.print(vo.getJob() + "\t");
+            }
+
+            if(vo.getManager()<999) {
+                System.out.print(vo.getManager() + "\t\t");
+            }
+            else {
+                System.out.print(vo.getManager() + "\t");
+            }
+
+            System.out.print(vo.getHiredate().toString().substring(0,11) + "\t");
+
+            if(vo.getSalary()<999) {
+                System.out.print(vo.getSalary() + "\t\t");
+            }
+            else {
+                System.out.print(vo.getSalary() + "\t");
+            }
+
+            if(vo.getCommission()<999) {
+                System.out.print(vo.getCommission() + "\t\t");
+            }
+            else {
+                System.out.print(vo.getCommission() + "\t");
+            }
+
+            System.out.print(vo.getDname() + "\n");
+
+        }
+        System.out.print("메인 메뉴로 이동합니다(Enter) ? ");
+        s.nextLine();
+    }
+
+}
